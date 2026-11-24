@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>剁手判官</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;600;900&display=swap" rel="stylesheet">
+<style>
+/* VOICE: 一本正经的公堂判案，用来逗自己别乱花钱
+   IDEA: 衙门判决书——想买的东西被押上堂，三问之后盖红印
+   PICTURE: 大红官印落章，以及「这钱=上班几小时」的大字
+   COLOUR and TYPE: 牛皮纸底、墨色字、朱砂印；马善政毛笔题字 + 思源宋体
+   LAYOUT: 单栏卷宗，呈堂→三问→判决→小金库→冷宫 */
+:root{color-scheme:light dark;
+--bg:light-dark(#e8d9bc,#1b1712);--paper:light-dark(#f3e8d2,#26201a);--ink:light-dark(#2a2118,#efe3cb);
+--mute:light-dark(#6e5d47,#b5a58b);--line:light-dark(#c9b48f,#4a3f33);--red:light-dark(#b3261e,#e0483d);--red2:light-dark(#f6dcd5,#3a1d19)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Noto Serif SC","Songti SC",serif;overflow-x:clip}
+.wrap{max-width:640px;margin:0 auto;padding:28px max(4vw,14px) 60px}
+h1{font:400 clamp(44px,12vw,64px)/1.05 "Ma Shan Zheng","STKaiti",serif;margin:0;letter-spacing:.04em}
+.sub{color:var(--mute);margin:6px 0 22px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:20px 18px;margin-bottom:18px;position:relative;box-shadow:0 2px 0 var(--line)}
+h2{font:400 28px/1.1 "Ma Shan Zheng","STKaiti",serif;margin:0 0 14px}
+label{display:block;font-size:14px;color:var(--mute);margin:10px 0 4px}
+input{width:100%;font:16px "Noto Serif SC",serif;padding:11px 12px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink)}
+input:focus,button:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+button{font:600 16px "Noto Serif SC",serif;min-height:44px;padding:0 18px;border-radius:4px;border:1px solid var(--ink);background:transparent;color:var(--ink);cursor:pointer}
+button.main{background:var(--red);border-color:var(--red);color:#fff8ec;width:100%;margin-top:16px;font-size:18px}
+.conv{margin-top:16px;border-top:1px dashed var(--line);padding-top:14px}
+.big{font:900 clamp(30px,9vw,44px)/1.1 "Noto Serif SC",serif;color:var(--red);white-space:nowrap}
+.eq{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px;text-align:center}
+.eq div{background:var(--bg);border-radius:4px;padding:8px 4px;font-size:13px;color:var(--mute)}
+.eq b{display:block;font-size:20px;color:var(--ink)}
+.hint{font-size:13px;color:var(--mute)}
+.q{padding:12px 0;border-bottom:1px dashed var(--line)}.q:last-child{border:0}
+.q p{margin:0 0 8px;font-weight:600}
+.opts{display:flex;gap:10px;flex-wrap:wrap}
+.opts button{flex:1}
+.opts button.on{background:var(--ink);color:var(--paper)}
+#verdict{text-align:center;padding-top:26px}
+.seal{display:inline-grid;place-items:center;width:150px;height:150px;border:6px solid var(--red);border-radius:14px;color:var(--red);
+font:400 52px/1 "Ma Shan Zheng","STKaiti",serif;transform:rotate(-8deg);margin:4px auto 16px;background:var(--red2);
+box-shadow:inset 0 0 0 3px var(--paper),inset 0 0 0 5px var(--red)}
+.seal.stamp{animation:stamp .45s cubic-bezier(.3,1.6,.5,1)}
+@keyframes stamp{0%{transform:rotate(-8deg) scale(2.4);opacity:0}100%{transform:rotate(-8deg) scale(1);opacity:1}}
+@media(prefers-reduced-motion:reduce){.seal.stamp{animation:none}}
+.words{font-size:17px;margin:0 0 16px;text-wrap:balance}
+.acts{display:grid;gap:10px}
+.acts button.save{background:var(--ink);color:var(--paper)}
+.total{font:900 clamp(40px,12vw,60px)/1 "Noto Serif SC",serif;color:var(--red);white-space:nowrap}
+ul{list-style:none;margin:12px 0 0;padding:0}
+li{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:15px;align-items:center;flex-wrap:wrap}
+li span.p{white-space:nowrap;font-weight:600}
+li .mini{display:flex;gap:6px}li .mini button{min-height:36px;padding:0 10px;font-size:14px}
+.empty{color:var(--mute);font-size:14px;padding:8px 0}
+.stats{display:flex;gap:18px;flex-wrap:wrap;margin-top:8px;color:var(--mute);font-size:14px}
+.hide{display:none}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:10px 18px;border-radius:20px;font-size:15px;opacity:0;transition:opacity .3s;pointer-events:none;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>剁手判官</h1>
+  <p class="sub">想花钱？先过堂。</p>
+
+  <section class="card">
+    <h2>呈堂证供</h2>
+    <label for="item">想买什么</label>
+    <input id="item" value="直播间的打折羽绒服" maxlength="30">
+    <div class="row">
+      <div><label for="price">多少钱（元）</label><input id="price" type="number" inputmode="decimal" value="399" min="0"></div>
+      <div><label for="salary">月薪（选填，只存在本机）</label><input id="salary" type="number" inputmode="decimal" placeholder="如 4000" min="0"></div>
+    </div>
+    <div class="conv">
+      <div id="hoursBox"><div class="hint">这笔钱，等于你上班</div><div class="big" id="hours">—</div></div>
+      <div class="eq">
+        <div><b id="eqEgg">0</b>份番茄炒蛋</div>
+        <div><b id="eqTea">0</b>杯奶茶</div>
+        <div><b id="eqTake">0</b>顿外卖</div>
+      </div>
+    </div>
+    <p class="hint" style="margin:10px 0 0">示例已填好，换成你想买的东西。</p>
+    <button class="main" id="start">升 堂</button>
+  </section>
+
+  <section class="card hide" id="askCard">
+    <h2>三问</h2>
+    <div id="qs"></div>
+    <button class="main" id="judge" disabled>请判官定夺</button>
+  </section>
+
+  <section class="card hide" id="verdict">
+    <div class="seal" id="seal">驳回</div>
+    <p class="words" id="words"></p>
+    <div class="acts">
+      <button class="save" id="aSave">我忍住了，钱进小金库</button>
+      <button id="aCold">打入冷宫，三天后再说</button>
+      <button id="aBuy">我认罪，还是买了</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>小金库</h2>
+    <div class="hint">忍住没花的钱</div>
+    <div class="total" id="total">¥0</div>
+    <div class="stats"><span id="sCount">忍住 0 次</span><span id="sBuy">剁手 0 次</span><span id="sEq"></span></div>
+    <ul id="saved"></ul>
+  </section>
+
+  <section class="card">
+    <h2>冷宫</h2>
+    <div class="hint">关满三天，还想要再说</div>
+    <ul id="cold"></ul>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+{
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const KEY='duoshou-v1';
+let st={salary:'',saved:[],cold:[],bought:0};
+try{const r=localStorage.getItem(KEY);if(r)st=Object.assign(st,JSON.parse(r))}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}};
+const fmt=n=>'¥'+(Math.round(n*100)/100).toLocaleString('zh-CN');
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+
+const BANK=[
+ {q:'家里有没有类似的、还能用的？',o:['有','没有'],bad:0},
+ {q:'一个月后，你还会经常用它吗？',o:['会','不会'],bad:1},
+ {q:'要是它明天涨价一倍，你还买吗？',o:['还买','那算了'],bad:1},
+ {q:'你现在是不是又累又困、心情一般？',o:['是','没有'],bad:0},
+ {q:'是不是刷视频、逛直播间刚看到的？',o:['是','不是'],bad:0},
+ {q:'不买的话，日子会真的受影响吗？',o:['会','不会'],bad:1},
+ {q:'是不是因为打折才突然想买？',o:['是','不是'],bad:0},
+ {q:'买回来放哪儿、怎么用，想好了吗？',o:['想好了','没想过'],bad:1},
+ {q:'这个月的额度还够吗？',o:['够','不太够'],bad:1}
+];
+const WORDS={
+ no:['此物来路可疑，系冲动所致，驳回！{n}请速速退出直播间。','{h}的血汗钱，换一个「{n}」？本官不准。','三问皆露破绽，{n}驳回，退堂！','判官掐指一算：{n}买回去，七天后就会吃灰。'],
+ wait:['尚有疑点，{n}暂押冷宫三日，三天后若还想要，再议。','情有可原，但证据不足。{n}先关三天，冷静一下。','本官看你有点上头，{n}缓刑三日。'],
+ ok:['证据确凿，确属刚需，准了！{n}买吧，记得记账。','此物合情合理，本官准奏。买完这个月收收手。','{n}通过审核，花得明白，准！']
+};
+
+let cur=null,answers=[];
+function info(){
+  const name=$('item').value.trim()||'这玩意儿',price=Math.max(0,parseFloat($('price').value)||0),sal=parseFloat($('salary').value)||0;
+  return {name,price,sal};
+}
+function hoursText(price,sal){
+  if(!sal)return '';
+  const h=price/(sal/21.75/7.5);
+  return h<1?Math.round(h*60)+' 分钟':h<7.5?(Math.round(h*10)/10)+' 小时':(Math.round(h/7.5*10)/10)+' 天';
+}
+function conv(){
+  const {price,sal}=info();
+  const t=hoursText(price,sal);
+  $('hours').textContent=t||'填个月薪就能算';
+  $('hours').style.fontSize=t?'':'20px';
+  $('eqEgg').textContent=Math.floor(price/6);
+  $('eqTea').textContent=Math.floor(price/15);
+  $('eqTake').textContent=Math.floor(price/30);
+  st.salary=$('salary').value;save();
+}
+$('salary').value=st.salary||'';
+['item','price','salary'].forEach(id=>$(id).addEventListener('input',conv));
+
+$('start').addEventListener('click',()=>{
+  const i=info();
+  if(!i.price){toast('先说说多少钱');return}
+  cur=i;answers=[];
+  const qs=[...BANK].sort(()=>Math.random()-.5).slice(0,3);
+  cur.qs=qs;
+  $('qs').innerHTML=qs.map((q,k)=>`<div class="q"><p>${k+1}. ${esc(q.q)}</p><div class="opts">${q.o.map((o,j)=>`<button data-k="${k}" data-j="${j}">${esc(o)}</button>`).join('')}</div></div>`).join('');
+  $('judge').disabled=true;
+  $('askCard').classList.remove('hide');$('verdict').classList.add('hide');
+  $('askCard').scrollIntoView({behavior:'smooth',block:'start'});
+});
+$('qs').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  const k=+b.dataset.k,j=+b.dataset.j;answers[k]=j;
+  b.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+  $('judge').disabled=answers.filter(x=>x!==undefined).length<3;
+});
+$('judge').addEventListener('click',()=>{
+  const bad=cur.qs.reduce((s,q,k)=>s+(answers[k]===q.bad?1:0),0);
+  let v=bad>=2?'no':bad===1?'wait':(cur.price>300?'wait':'ok');
+  cur.v=v;
+  const seal=$('seal');
+  seal.textContent={no:'驳回',wait:'缓刑',ok:'准'}[v];
+  seal.classList.remove('stamp');void seal.offsetWidth;seal.classList.add('stamp');
+  const h=hoursText(cur.price,cur.sal)||fmt(cur.price);
+  $('words').textContent=pick(WORDS[v]).replace(/\{n\}/g,'「'+cur.name+'」').replace('{h}',h);
+  $('verdict').classList.remove('hide');$('askCard').classList.add('hide');
+  $('verdict').scrollIntoView({behavior:'smooth',block:'start'});
+});
+function done(msg){$('verdict').classList.add('hide');render();toast(msg);window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})}
+$('aSave').addEventListener('click',()=>{st.saved.unshift({n:cur.name,p:cur.price,t:Date.now()});save();done('好样的！'+fmt(cur.price)+' 进了小金库')});
+$('aCold').addEventListener('click',()=>{st.cold.unshift({n:cur.name,p:cur.price,u:Date.now()+3*864e5});save();done('已打入冷宫，三天后再审')});
+$('aBuy').addEventListener('click',()=>{st.bought++;save();done(cur.v==='ok'?'买吧，记得记账':'认罪态度良好，下不为例')});
+
+$('cold').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  const i=+b.dataset.i,it=st.cold[i];if(!it)return;
+  st.cold.splice(i,1);
+  if(b.dataset.a==='keep'){st.saved.unshift({n:it.n,p:it.p,t:Date.now()});toast('冷静成功，'+fmt(it.p)+' 进小金库')}
+  else{st.bought++;toast('关了三天还想要，那就买吧')}
+  save();render();
+});
+$('saved').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  st.saved.splice(+b.dataset.i,1);save();render();
+});
+
+function render(){
+  const tot=st.saved.reduce((s,x)=>s+x.p,0);
+  $('total').textContent=fmt(tot);
+  $('sCount').textContent='忍住 '+st.saved.length+' 次';
+  $('sBuy').textContent='剁手 '+st.bought+' 次';
+  $('sEq').textContent=tot>=30?'≈ '+Math.floor(tot/30)+' 顿外卖':'';
+  $('saved').innerHTML=st.saved.length?st.saved.slice(0,30).map((x,i)=>`<li><span>${esc(x.n)}</span><span class="mini"><span class="p">${fmt(x.p)}</span><button data-i="${i}" aria-label="删除">删</button></span></li>`).join(''):'<div class="empty">还没有。第一笔忍住的钱，会出现在这里。</div>';
+  const now=Date.now();
+  $('cold').innerHTML=st.cold.length?st.cold.map((x,i)=>{
+    const left=x.u-now;
+    const tag=left>0?`还剩 ${Math.ceil(left/36e5)} 小时`:'刑满释放，还想要吗？';
+    const btns=left>0?`<button data-i="${i}" data-a="keep">不要了</button>`:`<button data-i="${i}" data-a="keep">不要了</button><button data-i="${i}" data-a="buy">还想要</button>`;
+    return `<li><span>${esc(x.n)} <span class="p">${fmt(x.p)}</span><br><span class="hint">${tag}</span></span><span class="mini">${btns}</span></li>`;
+  }).join(''):'<div class="empty">冷宫空着。</div>';
+}
+let tt;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2200)}
+conv();render();setInterval(render,60000);
+}
+</script>
+</body>
+</html>
